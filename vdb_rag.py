@@ -12,8 +12,8 @@ from langchain_community.embeddings import HuggingFaceInstructEmbeddings
 # The system takes a query, retrieves relevant documents from the vector database, and uses a pre-trained language model to generate an answer. 
 
 # Define file paths
-modelPath = "C:/DJ/projects/python/ixl"
-queryModelPath = "C:/DJ/projects/python/flant5base"
+modelPath = "C:/DJ/models/ixl"
+queryModelPath = "C:/DJ/models/t5"
 dbPath = 'C:/DJ/projects/python/dbdir/'
 
 def print_text(text): 
