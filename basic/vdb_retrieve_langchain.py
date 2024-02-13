@@ -4,8 +4,9 @@ from langchain.docstore.document import Document
 from langchain_community.embeddings.sentence_transformer import (SentenceTransformerEmbeddings,)
 from langchain_community.embeddings.sentence_transformer import (SentenceTransformerEmbeddings,)
 from langchain_community.embeddings import HuggingFaceInstructEmbeddings
-modelPath = "C:/DJ/projects/python/mini"
-dbPath = 'C:/DJ/projects/python/dblangmini/'
+modelPath = "C:/DJ/models/ixl"
+dbPath = 'C:/DJ/db/'
+collection_name = 'Query_Collection'
 
 def printdocs(docs: list[Document]):
     for d in range(len(docs)):
@@ -16,13 +17,12 @@ def wraptxt(text: str, width: int = 120) -> str:
     return '\n'.join(textwrap.wrap(text, width)) 
 
 
-query = "What was the Target Price for Sunoco? "
-
+query = "What is Target price of Signify?"
 
 #embedding = SentenceTransformerEmbeddings(model_name=modelPath)
-embedding = HuggingFaceInstructEmbeddings(model_name="hkunlp/instructor-xl", 
+embedding = HuggingFaceInstructEmbeddings(model_name=modelPath, 
                                                       model_kwargs={"device": "cpu"})
-vectordb = Chroma(persist_directory=dbPath, embedding_function=embedding)
+vectordb = Chroma(collection_name=collection_name,persist_directory=dbPath, embedding_function=embedding)
 
 retriever = vectordb.as_retriever(search_kwargs={"k": 5})
 

@@ -13,10 +13,10 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTex
 from langchain_community.embeddings.sentence_transformer import (SentenceTransformerEmbeddings,)
 from langchain_community.embeddings import HuggingFaceInstructEmbeddings
 
-dbPath = 'C:/DJ/projects/python/dbdir/'
-pdfs = 'C:/DJ/projects/python/nlp/pdf/docs/'
-modelPath = "C:/DJ/projects/python/ixl"
-collection_name = 'Bloomberg_langchain'
+dbPath = 'C:/DJ/db/'
+pdfs = 'C:/DJ/docs/query'
+modelPath = 'C:/DJ/models/ixl'
+collection_name = 'Query_Collection'
 
 def printdocs(docs: list[Document]):
     for d in range(len(docs)):
@@ -31,18 +31,17 @@ loader = DirectoryLoader(pdfs, loader_cls=PyPDFLoader)
 documents = loader.load()
 print(len(documents))
 
-splitter = RecursiveCharacterTextSplitter(chunk_size = 500, chunk_overlap  = 100)
+splitter = RecursiveCharacterTextSplitter(chunk_size = 200, chunk_overlap = 20)
 docs = splitter.split_documents(documents)
 printdocs(docs)
-
+model_kwargs = {'device': 'cpu'}  # Do not include 'token' here
 embedding_function = HuggingFaceInstructEmbeddings(model_name=modelPath, 
-                                                      model_kwargs={"device": "cpu"})
-#embedding_function = embedding_functions.InstructorEmbeddingFunction() 
+                                                    model_kwargs=model_kwargs
+                                                    )
 
-#embedding_function = SentenceTransformerEmbeddings(model_name=modelPath)
-
-vectordb = Chroma.from_documents(documents=docs, 
-                                 embedding=embedding_function,
-                                 persist_directory=dbPath)
+vectordb = Chroma.from_documents(collection_name=collection_name, documents=docs, 
+                                embedding=embedding_function,
+                                persist_directory=dbPath
+                               )
 vectordb.persist()
 vectordb = None

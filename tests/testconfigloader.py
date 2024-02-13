@@ -1,10 +1,10 @@
 import unittest
-from utils.configloader import loadconfig
+from utils import configloader as cl
 
 class TestConfigLoader(unittest.TestCase):
     def test_loadconfig(self):
         # Test loading the config
-        config = loadconfig()
+        config = cl.loadconfig()
         print(config)
         self.assertIsNotNone(config)
 

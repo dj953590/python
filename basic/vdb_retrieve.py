@@ -1,6 +1,6 @@
 import chromadb 
 
-dbPath = 'C:/DJ/projects/python/db/'
+dbPath = 'C:/DJ/db/'
 
 client = chromadb.PersistentClient(dbPath)
 
