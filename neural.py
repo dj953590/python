@@ -21,4 +21,5 @@ n = Neuron(weights, bias)
 
 x = np.array([2, 3])
 
-print(n.feedforward(x))
+if __name__ == '__main__':
+    print(n.feedforward(x))
