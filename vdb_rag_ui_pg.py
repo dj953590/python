@@ -1,0 +1,78 @@
+import time
+import textwrap
+import gradio as gr
+from langchain_community.llms import Ollama
+from langchain_community.embeddings import OllamaEmbeddings
+from langchain_postgres.vectorstores import PGVector
+import os
+from langchain.chains import RetrievalQA
+
+# This code sets up a retrieval-based question answering system using a pre-trained language model and a vector database. 
+# The system takes a query, retrieves relevant documents from the vector database, and uses a pre-trained language model to generate an answer. 
+
+# Define file paths
+
+dbPath = 'C:/DJ/db'
+collection_name = 'Query_Collection'
+
+CONNECTION_STRING = PGVector.connection_string_from_db_params(
+    driver=os.environ.get("PGVECTOR_DRIVER", "psycopg"),
+    host=os.environ.get("PGVECTOR_HOST", "localhost"),
+    port=int(os.environ.get("PGVECTOR_PORT", "5432")),
+    database=os.environ.get("PGVECTOR_DATABASE", "postgres"),
+    user=os.environ.get("PGVECTOR_USER", "postgres"),
+    password=os.environ.get("PGVECTOR_PASSWORD", "postgres"),
+)
+
+def print_text(text): 
+    for char in text:
+        print(char, end = "", flush = True)
+        time.sleep(0.02)
+
+def wraptxt(text: str, width: int = 120) -> str:
+    return '\n'.join(textwrap.wrap(text, width))        
+
+
+embeddings = OllamaEmbeddings(model="llama3", show_progress=True)
+# Create Chroma object for vector database
+vectordb = PGVector(collection_name=collection_name,connection=CONNECTION_STRING, embeddings=embeddings)
+# Create retriever from vector database
+retriever = vectordb.as_retriever(search_kwargs={"k": 3})
+    # Load model for sequence-to-sequence generation
+llm_llama = Ollama(base_url='http://localhost:11434', model="llama3", temperature=0)
+
+def generate_qa_repsonse(query):
+    # Create RetrievalQA object
+    qa_chain = RetrievalQA.from_chain_type(llm=llm_llama, chain_type="stuff", retriever=retriever, chain_type_kwargs={"verbose": True}, return_source_documents=True)       
+    response = qa_chain(query)
+    result_str = (wraptxt(response['result']))
+    source_str = (wraptxt(response['source_documents'][0].metadata['source']))
+    #page_no = response['source_documents'][0].metadata['page']
+    return result_str + '\n' + source_str #+ ' Page Number :' + str(page_no)
+
+def generate_response(prompt):
+    completion = generate_qa_repsonse(prompt)
+    return completion
+
+
+def qa_bot(input, history):
+    history = history or []
+    output = generate_response(input)
+    history.append((input, output))
+    return history, history
+
+with gr.Blocks(title="Helios RAG Demo", theme=gr.themes.Base(font=[gr.themes.GoogleFont("Inconsolata"), "Arial", "sans-serif"], primary_hue=gr.themes.colors.red, secondary_hue=gr.themes.colors.pink)) as qa_demo:
+    gr.Markdown("""<h1><center>Question Answer & Classification Demo</center></h1>""")
+    with gr.Tab("Question Answer"):
+        bot = gr.Chatbot(bubble_full_width=False, show_label=False,height=500) #.style(width=700, height=500, color_map=["blue", "green"])
+        state = gr.State()
+        txt = gr.Textbox(show_label=False, placeholder="Ask a question and press enter.")
+        txt.submit(qa_bot, inputs=[txt, state], outputs=[bot, state])
+    with gr.Tab("Document Classification"):
+        with gr.Row():
+            file_component = gr.File(label="Upload Single File", file_count="single")
+            image_output = gr.Image()
+        classify_button= gr.Button("Classify File")
+
+if __name__ == "__main__":
+    qa_demo.launch(share = False)
